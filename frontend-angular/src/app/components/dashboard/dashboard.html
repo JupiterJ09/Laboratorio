@@ -1,0 +1,31 @@
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+  <app-stat-card
+    [titulo]="'Insumos Activos'"
+    [valor]="142"
+    [subtexto]="'Total en inventario'"
+    [color]="'blue'">
+  </app-stat-card>
+
+  <app-stat-card
+    [titulo]="'Alertas Críticas'"
+    [valor]="8"
+    [subtexto]="'Stock por debajo del 10%'"
+    [color]="'red'">
+  </app-stat-card>
+
+  <app-stat-card
+    [titulo]="'Próxima Predicción'"
+    [valor]="'24 Horas'"
+    [subtexto]="'Siguiente corrida del modelo'"
+    [color]="'green'">
+  </app-stat-card>
+
+  <app-stat-card
+    [titulo]="'Próx. a Caducar'"
+    [valor]="23"
+    [subtexto]="'En los próximos 7 días'"
+    [color]="'yellow'">
+  </app-stat-card>
+
+</div>

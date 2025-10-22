@@ -7,16 +7,16 @@
 
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { ApiService } from './api.service';
-import { WebSocketService } from './websocket.service';
+import { ApiService } from './api';
+import { WebSocketService } from './websocket';
 import { Alerta } from '../models/alerta.interface';
 
 @Injectable({
   providedIn: 'root'
 })
-export class Alerta {
+export class AlertaService {
   private apiService = inject(ApiService);
-  private wsService = inject(WebSocketServicecket);
+  private wsService = inject(WebSocketService);
   private endpoint = 'alertas';
 
   private alertasSubject = new BehaviorSubject<Alerta[]>([]);

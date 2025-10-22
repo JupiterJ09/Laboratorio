@@ -1,1 +1,22 @@
-<p>stat-card works!</p>
+<div
+  class="bg-white rounded-lg shadow-md p-5 border-t-4"
+  [ngClass]="{
+    'border-blue-500': color === 'blue',
+    'border-red-500': color === 'red',
+    'border-green-500': color === 'green',
+    'border-yellow-500': color === 'yellow'
+  }">
+
+  <div class="text-sm font-medium text-gray-500 uppercase tracking-wider">
+    {{ titulo }}
+  </div>
+
+  <div class="text-3xl font-bold text-gray-900 my-2">
+    {{ valor }}
+  </div>
+
+  <div class="text-xs text-gray-500">
+    {{ subtexto }}
+  </div>
+
+</div>

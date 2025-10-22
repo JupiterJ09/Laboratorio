@@ -6,7 +6,7 @@
 
  import { Injectable, inject } from '@angular/core';
  import { Observable } from 'rxjs';
- import { ApiService } from './api.service';
+ import { ApiService } from './api';
  import { Prediccion } from '../models/prediccion.interface';
 
  @Injectable({

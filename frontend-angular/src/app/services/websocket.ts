@@ -15,7 +15,7 @@ import { Subject, Observable } from 'rxjs';
   providedIn: 'root'
 })
 
-export class Websocket {
+export class WebSocketService {
   private stompClient!: Client;
   private readonly webSocketUrl = 'http://localhost:8080/ws';
   private alertaSubject = new Subject<any>();
@@ -41,7 +41,7 @@ export class Websocket {
       this.subscribeToAlerts();
       };
     }
-  private subcribeToAlerts(): void {
+  private subscribeToAlerts(): void {
     this.stompClient.subscribe('/topic/alertas:', (message: IMessage) => {
       console.log('mensaje recibido de /topic/alertas:', message.body);
       const alerta = JSON.parse(message.body);
@@ -53,4 +53,5 @@ export class Websocket {
       this.stompClient.deactivate();
       console.log('WebSocket desconectado.');
     }
+  }
 }

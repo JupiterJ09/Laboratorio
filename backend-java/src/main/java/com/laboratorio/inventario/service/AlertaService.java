@@ -1,7 +1,7 @@
 package com.laboratorio.inventario.service;
 
 import com.laboratorio.inventario.dto.AlertaDTO;
-import com.laboratorio.inventario.entity.Alerta;
+//import com.laboratorio.inventario.entity.Alerta;
 import com.laboratorio.inventario.entity.Insumo;
 import com.laboratorio.inventario.entity.Lote;
 

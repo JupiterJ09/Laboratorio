@@ -3,7 +3,7 @@ package com.laboratorio.inventario.controller;
 import com.laboratorio.inventario.dto.EstadisticasDTO;
 import com.laboratorio.inventario.service.InsumoService;
 import com.laboratorio.inventario.service.LoteService;
-import com.laboratorio.inventario.service.ConsumoService;
+//import com.laboratorio.inventario.service.ConsumoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ public class EstadisticasController {
     private LoteService loteService;
 
     @Autowired
-    private ConsumoService consumoService;
+    //private ConsumoService consumoService;
 
     /**
      * GET /api/estadisticas/dashboard

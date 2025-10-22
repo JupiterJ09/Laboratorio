@@ -1,5 +1,6 @@
 package com.laboratorio.inventario.service.impl;
 
+import com.laboratorio.inventario.controller.AlertaWebSocketController;
 import com.laboratorio.inventario.dto.AlertaDTO;
 import com.laboratorio.inventario.entity.Alerta;
 import com.laboratorio.inventario.entity.Insumo;
@@ -37,6 +38,10 @@ public class AlertaServiceImpl implements AlertaService {
     @Autowired
     private ConsumoService consumoService;
 
+    // ⭐ NUEVO: Inyección del controlador WebSocket
+    @Autowired
+    private AlertaWebSocketController webSocketController;
+
     // ==========================================
     // MÉTODOS CRUD BÁSICOS
     // ==========================================
@@ -72,7 +77,12 @@ public class AlertaServiceImpl implements AlertaService {
                 .map(alerta -> {
                     alerta.marcarComoLeida();
                     alertaRepository.save(alerta);
-                    return convertirADTO(alerta);
+                    AlertaDTO dto = convertirADTO(alerta);
+                    
+                    // ⭐ NOTIFICA POR WEBSOCKET QUE SE MARCÓ COMO LEÍDA
+                    webSocketController.enviarAlerta(dto);
+                    
+                    return dto;
                 })
                 .orElse(null);
     }
@@ -108,7 +118,13 @@ public class AlertaServiceImpl implements AlertaService {
         alerta.setLeida(false);
 
         Alerta guardada = alertaRepository.save(alerta);
-        return convertirADTO(guardada);
+        AlertaDTO dto = convertirADTO(guardada);
+        
+        // ⭐ ENVÍA POR WEBSOCKET EN TIEMPO REAL
+        webSocketController.enviarAlerta(dto);
+        System.out.println("✅ Alerta Stock Bajo creada y enviada: " + insumo.getNombre());
+        
+        return dto;
     }
 
     @Override
@@ -138,7 +154,13 @@ public class AlertaServiceImpl implements AlertaService {
         alerta.setLeida(false);
 
         Alerta guardada = alertaRepository.save(alerta);
-        return convertirADTO(guardada);
+        AlertaDTO dto = convertirADTO(guardada);
+        
+        // ⭐ ENVÍA POR WEBSOCKET EN TIEMPO REAL
+        webSocketController.enviarAlerta(dto);
+        System.out.println("⏰ Alerta Caducidad creada y enviada: " + lote.getNumeroLote());
+        
+        return dto;
     }
 
     @Override
@@ -158,7 +180,13 @@ public class AlertaServiceImpl implements AlertaService {
         alerta.setLeida(false);
 
         Alerta guardada = alertaRepository.save(alerta);
-        return convertirADTO(guardada);
+        AlertaDTO dto = convertirADTO(guardada);
+        
+        // ⭐ ENVÍA POR WEBSOCKET EN TIEMPO REAL
+        webSocketController.enviarAlerta(dto);
+        System.out.println("❌ Alerta Vencido creada y enviada: " + lote.getNumeroLote());
+        
+        return dto;
     }
 
     @Override
@@ -185,7 +213,13 @@ public class AlertaServiceImpl implements AlertaService {
         alerta.setLeida(false);
 
         Alerta guardada = alertaRepository.save(alerta);
-        return convertirADTO(guardada);
+        AlertaDTO dto = convertirADTO(guardada);
+        
+        // ⭐ ENVÍA POR WEBSOCKET EN TIEMPO REAL
+        webSocketController.enviarAlerta(dto);
+        System.out.println("⚠️ Alerta Agotamiento creada y enviada: " + insumo.getNombre());
+        
+        return dto;
     }
 
     @Override
@@ -206,7 +240,13 @@ public class AlertaServiceImpl implements AlertaService {
         }
 
         Alerta guardada = alertaRepository.save(alerta);
-        return convertirADTO(guardada);
+        AlertaDTO dto = convertirADTO(guardada);
+        
+        // ⭐ ENVÍA POR WEBSOCKET EN TIEMPO REAL
+        webSocketController.enviarAlerta(dto);
+        System.out.println("📬 Alerta Personalizada creada y enviada: " + titulo);
+        
+        return dto;
     }
 
     // ==========================================
@@ -217,11 +257,15 @@ public class AlertaServiceImpl implements AlertaService {
     public List<AlertaDTO> verificarYGenerarAlertas() {
         List<AlertaDTO> alertasGeneradas = new ArrayList<>();
 
+        System.out.println("🔍 Iniciando verificación de alertas automáticas...");
+        
         alertasGeneradas.addAll(verificarAlertasStockBajo());
         alertasGeneradas.addAll(verificarAlertasCaducidad());
         alertasGeneradas.addAll(verificarAlertasVencidos());
         alertasGeneradas.addAll(verificarAlertasAgotamiento());
 
+        System.out.println("✅ Verificación completada. Total de alertas generadas: " + alertasGeneradas.size());
+        
         return alertasGeneradas;
     }
 

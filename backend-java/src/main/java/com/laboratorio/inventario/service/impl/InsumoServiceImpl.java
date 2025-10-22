@@ -7,7 +7,7 @@ import com.laboratorio.inventario.service.InsumoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.Map;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -213,6 +213,21 @@ public class InsumoServiceImpl implements InsumoService {
     public Double calcularValorTotalInventario() {
         Double valor = insumoRepository.calcularValorTotalInventario();
         return valor != null ? valor : 0.0;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Double> calcularValorPorCategoria() {
+        List<Object[]> valores = insumoRepository.calcularValorInventarioPorCategoria();
+        Map<String, Double> resultado = new java.util.HashMap<>();
+        
+        for (Object[] row : valores) {
+            String categoria = (String) row[0];
+            Double valor = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+            resultado.put(categoria, valor);
+        }
+        
+        return resultado;
     }
 
     // ==========================================

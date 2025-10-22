@@ -1,13 +1,13 @@
 package com.laboratorio.inventario.controller;
 
+import com.laboratorio.inventario.dto.InsumoDTO;
 import com.laboratorio.inventario.entity.Insumo;
-import com.laboratorio.inventario.repository.InsumoRepository;
+import com.laboratorio.inventario.service.InsumoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.Optional;
 public class InsumoController {
 
     @Autowired
-    private InsumoRepository insumoRepository;
+    private InsumoService insumoService;
 
     // ==========================================
     // OPERACIONES CRUD BÁSICAS
@@ -30,9 +30,9 @@ public class InsumoController {
      * Obtener todos los insumos
      */
     @GetMapping
-    public ResponseEntity<List<Insumo>> getAllInsumos() {
+    public ResponseEntity<List<InsumoDTO>> getAllInsumos() {
         try {
-            List<Insumo> insumos = insumoRepository.findAll();
+            List<InsumoDTO> insumos = insumoService.listarTodos();
             return ResponseEntity.ok(insumos);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -44,8 +44,8 @@ public class InsumoController {
      * Obtener un insumo por ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Insumo> getInsumoById(@PathVariable Long id) {
-        Optional<Insumo> insumo = insumoRepository.findById(id);
+    public ResponseEntity<InsumoDTO> getInsumoById(@PathVariable Long id) {
+        Optional<InsumoDTO> insumo = insumoService.obtenerPorId(id);
         return insumo.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -57,18 +57,7 @@ public class InsumoController {
     @PostMapping
     public ResponseEntity<?> createInsumo(@RequestBody Insumo insumo) {
         try {
-            // Verificar si el código de catálogo ya existe
-            if (insumo.getCodigoCatalogo() != null && 
-                insumoRepository.existsByCodigoCatalogo(insumo.getCodigoCatalogo())) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "El código de catálogo ya existe");
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-            }
-
-            // Calcular nivel de alerta antes de guardar
-            insumo.calcularNivelAlerta();
-            
-            Insumo nuevoInsumo = insumoRepository.save(insumo);
+            InsumoDTO nuevoInsumo = insumoService.crear(insumo);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoInsumo);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -84,38 +73,12 @@ public class InsumoController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateInsumo(@PathVariable Long id, @RequestBody Insumo insumoActualizado) {
         try {
-            Optional<Insumo> insumoExistente = insumoRepository.findById(id);
-            
-            if (insumoExistente.isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Insumo no encontrado");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-            }
-
-            Insumo insumo = insumoExistente.get();
-            
-            // Actualizar campos
-            insumo.setNombre(insumoActualizado.getNombre());
-            insumo.setCodigoCatalogo(insumoActualizado.getCodigoCatalogo());
-            insumo.setUnidadMedida(insumoActualizado.getUnidadMedida());
-            insumo.setCantidadActual(insumoActualizado.getCantidadActual());
-            insumo.setCantidadMinima(insumoActualizado.getCantidadMinima());
-            insumo.setPrecioUnitario(insumoActualizado.getPrecioUnitario());
-            insumo.setProveedor(insumoActualizado.getProveedor());
-            insumo.setUbicacionAlmacen(insumoActualizado.getUbicacionAlmacen());
-            insumo.setFechaCaducidad(insumoActualizado.getFechaCaducidad());
-            insumo.setLote(insumoActualizado.getLote());
-            insumo.setCategoria(insumoActualizado.getCategoria());
-            insumo.setDescripcion(insumoActualizado.getDescripcion());
-            insumo.setEstado(insumoActualizado.getEstado());
-            insumo.setConsumoPromedioDiario(insumoActualizado.getConsumoPromedioDiario());
-            insumo.setDiasStockRestante(insumoActualizado.getDiasStockRestante());
-            
-            // Recalcular nivel de alerta
-            insumo.calcularNivelAlerta();
-            
-            Insumo insumoGuardado = insumoRepository.save(insumo);
+            InsumoDTO insumoGuardado = insumoService.actualizar(id, insumoActualizado);
             return ResponseEntity.ok(insumoGuardado);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error al actualizar el insumo: " + e.getMessage());
@@ -130,18 +93,7 @@ public class InsumoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteInsumo(@PathVariable Long id) {
         try {
-            Optional<Insumo> insumoExistente = insumoRepository.findById(id);
-            
-            if (insumoExistente.isEmpty()) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Insumo no encontrado");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-            }
-
-            Insumo insumo = insumoExistente.get();
-            insumo.setEstado("inactivo");
-            insumoRepository.save(insumo);
-            
+            insumoService.eliminar(id);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Insumo eliminado correctamente");
             return ResponseEntity.ok(response);
@@ -161,8 +113,8 @@ public class InsumoController {
      * Obtener solo insumos activos
      */
     @GetMapping("/activos")
-    public ResponseEntity<List<Insumo>> getInsumosActivos() {
-        List<Insumo> insumos = insumoRepository.findByEstadoOrderByNombreAsc("activo");
+    public ResponseEntity<List<InsumoDTO>> getInsumosActivos() {
+        List<InsumoDTO> insumos = insumoService.listarActivos();
         return ResponseEntity.ok(insumos);
     }
 
@@ -171,8 +123,8 @@ public class InsumoController {
      * Buscar insumos por nombre
      */
     @GetMapping("/buscar")
-    public ResponseEntity<List<Insumo>> buscarPorNombre(@RequestParam String nombre) {
-        List<Insumo> insumos = insumoRepository.findByNombreContainingIgnoreCase(nombre);
+    public ResponseEntity<List<InsumoDTO>> buscarPorNombre(@RequestParam String nombre) {
+        List<InsumoDTO> insumos = insumoService.buscarPorNombre(nombre);
         return ResponseEntity.ok(insumos);
     }
 
@@ -181,8 +133,8 @@ public class InsumoController {
      * Obtener insumos por categoría
      */
     @GetMapping("/categoria/{categoria}")
-    public ResponseEntity<List<Insumo>> getInsumosPorCategoria(@PathVariable String categoria) {
-        List<Insumo> insumos = insumoRepository.findByCategoria(categoria);
+    public ResponseEntity<List<InsumoDTO>> getInsumosPorCategoria(@PathVariable String categoria) {
+        List<InsumoDTO> insumos = insumoService.buscarPorCategoria(categoria);
         return ResponseEntity.ok(insumos);
     }
 
@@ -191,8 +143,8 @@ public class InsumoController {
      * Obtener insumos por proveedor
      */
     @GetMapping("/proveedor/{proveedor}")
-    public ResponseEntity<List<Insumo>> getInsumosPorProveedor(@PathVariable String proveedor) {
-        List<Insumo> insumos = insumoRepository.findByProveedor(proveedor);
+    public ResponseEntity<List<InsumoDTO>> getInsumosPorProveedor(@PathVariable String proveedor) {
+        List<InsumoDTO> insumos = insumoService.buscarPorProveedor(proveedor);
         return ResponseEntity.ok(insumos);
     }
 
@@ -205,8 +157,8 @@ public class InsumoController {
      * Obtener insumos con alertas (crítico o bajo)
      */
     @GetMapping("/alertas")
-    public ResponseEntity<List<Insumo>> getInsumosConAlerta() {
-        List<Insumo> insumos = insumoRepository.findInsumosConAlerta();
+    public ResponseEntity<List<InsumoDTO>> getInsumosConAlerta() {
+        List<InsumoDTO> insumos = insumoService.obtenerInsumosConAlerta();
         return ResponseEntity.ok(insumos);
     }
 
@@ -215,8 +167,8 @@ public class InsumoController {
      * Obtener insumos por debajo del mínimo
      */
     @GetMapping("/bajo-minimo")
-    public ResponseEntity<List<Insumo>> getInsumosBajoMinimo() {
-        List<Insumo> insumos = insumoRepository.findInsumosBajoMinimo();
+    public ResponseEntity<List<InsumoDTO>> getInsumosBajoMinimo() {
+        List<InsumoDTO> insumos = insumoService.obtenerInsumosBajoMinimo();
         return ResponseEntity.ok(insumos);
     }
 
@@ -225,11 +177,9 @@ public class InsumoController {
      * Obtener insumos próximos a vencer
      */
     @GetMapping("/proximos-vencer")
-    public ResponseEntity<List<Insumo>> getInsumosProximosAVencer(
+    public ResponseEntity<List<InsumoDTO>> getInsumosProximosAVencer(
             @RequestParam(defaultValue = "30") int dias) {
-        LocalDate fechaInicio = LocalDate.now();
-        LocalDate fechaFin = fechaInicio.plusDays(dias);
-        List<Insumo> insumos = insumoRepository.findInsumosProximosAVencer(fechaInicio, fechaFin);
+        List<InsumoDTO> insumos = insumoService.obtenerInsumosProximosAVencer(dias);
         return ResponseEntity.ok(insumos);
     }
 
@@ -238,8 +188,8 @@ public class InsumoController {
      * Obtener insumos vencidos
      */
     @GetMapping("/vencidos")
-    public ResponseEntity<List<Insumo>> getInsumosVencidos() {
-        List<Insumo> insumos = insumoRepository.findInsumosVencidos(LocalDate.now());
+    public ResponseEntity<List<InsumoDTO>> getInsumosVencidos() {
+        List<InsumoDTO> insumos = insumoService.obtenerInsumosVencidos();
         return ResponseEntity.ok(insumos);
     }
 
@@ -248,9 +198,9 @@ public class InsumoController {
      * Obtener insumos con stock para X días o menos
      */
     @GetMapping("/stock-restante")
-    public ResponseEntity<List<Insumo>> getInsumosPorStockRestante(
+    public ResponseEntity<List<InsumoDTO>> getInsumosPorStockRestante(
             @RequestParam(defaultValue = "7") int dias) {
-        List<Insumo> insumos = insumoRepository.findInsumosPorDiasStockRestante(dias);
+        List<InsumoDTO> insumos = insumoService.obtenerInsumosPorStockRestante(dias);
         return ResponseEntity.ok(insumos);
     }
 
@@ -267,34 +217,19 @@ public class InsumoController {
         Map<String, Object> estadisticas = new HashMap<>();
         
         // Total de insumos activos
-        long totalActivos = insumoRepository.findByEstado("activo").size();
-        estadisticas.put("totalActivos", totalActivos);
+        estadisticas.put("totalActivos", insumoService.contarInsumosActivos());
         
         // Insumos con alertas
-        long insumosConAlerta = insumoRepository.findInsumosConAlerta().size();
-        estadisticas.put("insumosConAlerta", insumosConAlerta);
+        estadisticas.put("insumosConAlerta", insumoService.contarInsumosConAlerta());
         
         // Insumos bajo mínimo
-        long insumosBajoMinimo = insumoRepository.findInsumosBajoMinimo().size();
-        estadisticas.put("insumosBajoMinimo", insumosBajoMinimo);
+        estadisticas.put("insumosBajoMinimo", insumoService.contarInsumosBajoMinimo());
         
         // Valor total del inventario
-        Double valorTotal = insumoRepository.calcularValorTotalInventario();
-        estadisticas.put("valorTotalInventario", valorTotal != null ? valorTotal : 0.0);
+        estadisticas.put("valorTotalInventario", insumoService.calcularValorTotalInventario());
         
         // Insumos próximos a vencer (30 días)
-        LocalDate fechaInicio = LocalDate.now();
-        LocalDate fechaFin = fechaInicio.plusDays(30);
-        long insumosProximosVencer = insumoRepository.findInsumosProximosAVencer(fechaInicio, fechaFin).size();
-        estadisticas.put("insumosProximosVencer", insumosProximosVencer);
-        
-        // Conteo por nivel de alerta
-        List<Object[]> conteoPorAlerta = insumoRepository.contarInsumosPorNivelAlerta();
-        Map<String, Long> alertas = new HashMap<>();
-        for (Object[] row : conteoPorAlerta) {
-            alertas.put((String) row[0], ((Number) row[1]).longValue());
-        }
-        estadisticas.put("conteoPorNivelAlerta", alertas);
+        estadisticas.put("insumosProximosVencer", insumoService.obtenerInsumosProximosAVencer(30).size());
         
         return ResponseEntity.ok(estadisticas);
     }
@@ -305,15 +240,7 @@ public class InsumoController {
      */
     @GetMapping("/valor-por-categoria")
     public ResponseEntity<Map<String, Double>> getValorPorCategoria() {
-        List<Object[]> valores = insumoRepository.calcularValorInventarioPorCategoria();
-        Map<String, Double> resultado = new HashMap<>();
-        
-        for (Object[] row : valores) {
-            String categoria = (String) row[0];
-            Double valor = ((Number) row[1]).doubleValue();
-            resultado.put(categoria, valor);
-        }
-        
+        Map<String, Double> resultado = insumoService.calcularValorPorCategoria();
         return ResponseEntity.ok(resultado);
     }
 
@@ -330,7 +257,7 @@ public class InsumoController {
         Map<String, String> response = new HashMap<>();
         response.put("status", "OK");
         response.put("message", "Servicio de insumos funcionando correctamente");
-        response.put("timestamp", LocalDate.now().toString());
+        response.put("timestamp", java.time.LocalDate.now().toString());
         return ResponseEntity.ok(response);
     }
 }

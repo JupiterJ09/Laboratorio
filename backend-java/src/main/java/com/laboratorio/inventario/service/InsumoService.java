@@ -2,7 +2,7 @@ package com.laboratorio.inventario.service;
 
 import com.laboratorio.inventario.dto.InsumoDTO;
 import com.laboratorio.inventario.entity.Insumo;
-
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,4 +34,5 @@ public interface InsumoService {
     Long contarInsumosConAlerta();
     Long contarInsumosBajoMinimo();
     Double calcularValorTotalInventario();
+    Map<String, Double> calcularValorPorCategoria();
 }

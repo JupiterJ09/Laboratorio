@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Alertas - WebSocket</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .header h1 { color: #333; margin-bottom: 10px; }
+        .status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status.connected { background: #10B981; color: white; }
+        .status.disconnected { background: #EF4444; color: white; }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn-test { background: #3B82F6; color: white; }
+        .btn-sync { background: #8B5CF6; color: white; }
+        .btn-verify { background: #10B981; color: white; }
+        .btn-clear { background: #EF4444; color: white; }
+        .alertas-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .alerta {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .alerta.CRITICA { background: #FEE2E2; border-left-color: #DC2626; }
+        .alerta.ALTA { background: #FFEDD5; border-left-color: #EA580C; }
+        .alerta.MEDIA { background: #FEF3C7; border-left-color: #F59E0B; }
+        .alerta.BAJA { background: #DBEAFE; border-left-color: #3B82F6; }
+        .alerta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .alerta-tipo { font-size: 24px; margin-right: 10px; }
+        .alerta-titulo { font-weight: bold; font-size: 16px; color: #1F2937; flex: 1; }
+        .alerta-prioridad { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
+        .prioridad-CRITICA { background: #DC2626; }
+        .prioridad-ALTA { background: #EA580C; }
+        .prioridad-MEDIA { background: #F59E0B; }
+        .prioridad-BAJA { background: #3B82F6; }
+        .alerta-mensaje { color: #4B5563; margin-bottom: 8px; }
+        .alerta-footer { display: flex; justify-content: space-between; font-size: 12px; color: #6B7280; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #9CA3AF; }
+        .empty-state-icon { font-size: 64px; margin-bottom: 20px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card { background: white; padding: 15px; border-radius: 10px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 28px; font-weight: bold; color: #333; }
+        .stat-label { font-size: 12px; color: #6B7280; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Monitor de Alertas en Tiempo Real</h1>
+            <div id="status" class="status disconnected">⚫ Cargando...</div>
+        </div>
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number" id="totalAlertas">0</div><div class="stat-label">Total</div></div>
+            <div class="stat-card"><div class="stat-number" id="criticas">0</div><div class="stat-label">Críticas</div></div>
+            <div class="stat-card"><div class="stat-number" id="altas">0</div><div class="stat-label">Altas</div></div>
+            <div class="stat-card"><div class="stat-number" id="medias">0</div><div class="stat-label">Medias</div></div>
+            <div class="stat-card"><div class="stat-number" id="bajas">0</div><div class="stat-label">Bajas</div></div>
+        </div>
+        <div class="controls">
+            <button class="btn-test" onclick="enviarAlertaPrueba()">📨 Enviar Alerta de Prueba</button>
+            <button class="btn-sync" onclick="sincronizarAlertas()">🔄 Sincronizar Alertas</button>
+            <button class="btn-verify" onclick="verificarAlertas()">🔍 Verificar Sistema</button>
+            <button class="btn-clear" onclick="limpiarAlertas()">🗑️ Limpiar Pantalla</button>
+        </div>
+        <div class="alertas-container" id="alertasContainer">
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <h3>No hay alertas</h3>
+                <p>Esperando notificaciones del servidor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+    <script>
+        let stompClient = null;
+        let alertasRecibidas = [];
+
+        async function conectar() {
+            // Esperar librerías
+            let intentos = 0;
+            while ((typeof SockJS === 'undefined' || typeof Stomp === 'undefined') && intentos < 20) {
+                await new Promise(r => setTimeout(r, 500));
+                intentos++;
+            }
+
+            if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
+                document.getElementById('status').innerHTML = '⚫ Error: Librerías no disponibles';
+                return;
+            }
+
+            console.log('✅ Conectando...');
+            try {
+                const socket = new SockJS('http://localhost:8081/ws');
+                stompClient = Stomp.over(socket);
+                stompClient.debug = null;
+
+                stompClient.connect({}, function(frame) {
+                    console.log('✅ Conectado');
+                    document.getElementById('status').innerHTML = '🟢 Conectado';
+                    document.getElementById('status').className = 'status connected';
+
+                    stompClient.subscribe('/topic/alertas', function(mensaje) {
+                        const alerta = JSON.parse(mensaje.body);
+                        mostrarAlerta(alerta);
+                    });
+
+                    setTimeout(sincronizarAlertas, 1000);
+                }, function(error) {
+                    console.error('Error:', error);
+                    document.getElementById('status').innerHTML = '⚫ Error';
+                    document.getElementById('status').className = 'status disconnected';
+                    setTimeout(conectar, 5000);
+                });
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status').innerHTML = '⚫ Error: ' + e.message;
+            }
+        }
+
+        function mostrarAlerta(alerta) {
+            alertasRecibidas.unshift(alerta);
+            actualizarEstadisticas();
+            const container = document.getElementById('alertasContainer');
+            if (container.querySelector('.empty-state')) container.innerHTML = '';
+            const alertaDiv = document.createElement('div');
+            alertaDiv.className = `alerta ${alerta.prioridad}`;
+            alertaDiv.innerHTML = `
+                <div class="alerta-header">
+                    <span class="alerta-tipo">${alerta.icono || '📦'}</span>
+                    <span class="alerta-titulo">${alerta.titulo}</span>
+                    <span class="alerta-prioridad prioridad-${alerta.prioridad}">${alerta.prioridad}</span>
+                </div>
+                <div class="alerta-mensaje">${alerta.mensaje}</div>
+                <div class="alerta-footer">
+                    <span>Tipo: ${alerta.tipo}</span>
+                    <span>${new Date(alerta.fechaCreacion).toLocaleString()}</span>
+                </div>
+            `;
+            container.insertBefore(alertaDiv, container.firstChild);
+            if (container.children.length > 20) container.removeChild(container.lastChild);
+        }
+
+        function actualizarEstadisticas() {
+            document.getElementById('totalAlertas').textContent = alertasRecibidas.length;
+            document.getElementById('criticas').textContent = alertasRecibidas.filter(a => a.prioridad === 'CRITICA').length;
+            document.getElementById('altas').textContent = alertasRecibidas.filter(a => a.prioridad === 'ALTA').length;
+            document.getElementById('medias').textContent = alertasRecibidas.filter(a => a.prioridad === 'MEDIA').length;
+            document.getElementById('bajas').textContent = alertasRecibidas.filter(a => a.prioridad === 'BAJA').length;
+        }
+
+        async function enviarAlertaPrueba() {
+            try {
+                await fetch('http://localhost:8081/api/websocket/test?titulo=Prueba&tipo=STOCK_BAJO&prioridad=MEDIA', { method: 'POST' });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function sincronizarAlertas() {
+            try {
+                await fetch('http://localhost:8081/api/websocket/alertas/sync');
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function verificarAlertas() {
+            try {
+                const response = await fetch('http://localhost:8081/api/alertas/verificar-y-generar', { method: 'POST' });
+                const result = await response.json();
+                alert(`Alertas generadas: ${result.alertasGeneradas}`);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function limpiarAlertas() {
+            alertasRecibidas = [];
+            document.getElementById('alertasContainer').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <h3>No hay alertas</h3>
+                    <p>Esperando notificaciones del servidor...</p>
+                </div>
+            `;
+            actualizarEstadisticas();
+        }
+
+        window.onload = conectar;
+    </script>
+</body>
+</html>

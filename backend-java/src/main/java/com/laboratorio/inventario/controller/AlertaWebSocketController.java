@@ -3,13 +3,13 @@ package com.laboratorio.inventario.controller;
 import com.laboratorio.inventario.dto.AlertaDTO;
 import com.laboratorio.inventario.service.AlertaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -30,6 +30,7 @@ public class AlertaWebSocketController {
     private SimpMessagingTemplate messagingTemplate;
     
     @Autowired
+    @Lazy  // ⭐ IMPORTANTE: Rompe la dependencia circular con AlertaServiceImpl
     private AlertaService alertaService;
 
     /**
@@ -70,7 +71,7 @@ public class AlertaWebSocketController {
      * 
      * Útil para testing sin necesitar el cliente WebSocket
      * 
-     * POST http://localhost:8080/api/websocket/test
+     * POST http://localhost:8081/api/websocket/test
      * 
      * @param titulo Título de la alerta de prueba
      * @param tipo Tipo de alerta (STOCK_BAJO, CADUCIDAD, etc.)
@@ -104,7 +105,7 @@ public class AlertaWebSocketController {
      * 
      * Útil para sincronizar clientes que acaban de conectarse
      * 
-     * GET http://localhost:8080/api/websocket/alertas/sync
+     * GET http://localhost:8081/api/websocket/alertas/sync
      * 
      * @return Mensaje de confirmación con número de alertas enviadas
      */
@@ -123,7 +124,7 @@ public class AlertaWebSocketController {
     /**
      * Envía un broadcast de prueba a todos los clientes conectados
      * 
-     * GET http://localhost:8080/api/websocket/broadcast
+     * GET http://localhost:8081/api/websocket/broadcast
      * 
      * @param mensaje Mensaje personalizado para el broadcast
      * @param prioridad Prioridad de la alerta (CRITICA, ALTA, MEDIA, BAJA)
@@ -152,7 +153,7 @@ public class AlertaWebSocketController {
     /**
      * Envía una alerta crítica de emergencia
      * 
-     * POST http://localhost:8080/api/websocket/emergencia
+     * POST http://localhost:8081/api/websocket/emergencia
      * 
      * @param titulo Título de la emergencia
      * @param mensaje Descripción de la emergencia

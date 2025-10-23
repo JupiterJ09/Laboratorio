@@ -13,6 +13,7 @@ import com.laboratorio.inventario.service.ConsumoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +41,7 @@ public class AlertaServiceImpl implements AlertaService {
 
     // ⭐ NUEVO: Inyección del controlador WebSocket
     @Autowired
+    @Lazy 
     private AlertaWebSocketController webSocketController;
 
     // ==========================================

@@ -11,9 +11,9 @@ import com.laboratorio.inventario.repository.LoteRepository;
 import com.laboratorio.inventario.service.AlertaService;
 import com.laboratorio.inventario.service.ConsumoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,9 +39,9 @@ public class AlertaServiceImpl implements AlertaService {
     @Autowired
     private ConsumoService consumoService;
 
-    // ⭐ NUEVO: Inyección del controlador WebSocket
+    // ⭐ NUEVO: Inyección del controlador WebSocket con @Lazy para evitar dependencia circular
     @Autowired
-    @Lazy 
+    @Lazy
     private AlertaWebSocketController webSocketController;
 
     // ==========================================
@@ -131,6 +131,12 @@ public class AlertaServiceImpl implements AlertaService {
 
     @Override
     public AlertaDTO crearAlertaCaducidad(Lote lote, int diasRestantes) {
+        // Verificar si ya existe una alerta similar reciente (últimas 24 horas)
+        LocalDateTime hace24h = LocalDateTime.now().minusHours(24);
+        if (alertaRepository.existeAlertaRecienteLote("CADUCIDAD", lote.getId(), hace24h)) {
+            return null; // No crear duplicado
+        }
+        
         String prioridad;
         if (diasRestantes <= 7) {
             prioridad = "CRITICA";
@@ -167,6 +173,12 @@ public class AlertaServiceImpl implements AlertaService {
 
     @Override
     public AlertaDTO crearAlertaVencido(Lote lote) {
+        // Verificar si ya existe una alerta similar reciente (últimas 24 horas)
+        LocalDateTime hace24h = LocalDateTime.now().minusHours(24);
+        if (alertaRepository.existeAlertaRecienteLote("VENCIDO", lote.getId(), hace24h)) {
+            return null; // No crear duplicado
+        }
+        
         Alerta alerta = new Alerta();
         alerta.setTipo("VENCIDO");
         alerta.setPrioridad("CRITICA");
@@ -193,6 +205,12 @@ public class AlertaServiceImpl implements AlertaService {
 
     @Override
     public AlertaDTO crearAlertaAgotamientoProximo(Insumo insumo, int diasEstimados) {
+        // Verificar si ya existe una alerta similar reciente (últimas 24 horas)
+        LocalDateTime hace24h = LocalDateTime.now().minusHours(24);
+        if (alertaRepository.existeAlertaReciente("AGOTAMIENTO_PROXIMO", insumo.getId(), hace24h)) {
+            return null; // No crear duplicado
+        }
+        
         String prioridad;
         if (diasEstimados <= 3) {
             prioridad = "CRITICA";

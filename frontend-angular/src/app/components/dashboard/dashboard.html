@@ -1,31 +1,45 @@
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="flex flex-col gap-6">
 
-  <app-stat-card
-    [titulo]="'Insumos Activos'"
-    [valor]="142"
-    [subtexto]="'Total en inventario'"
-    [color]="'blue'">
-  </app-stat-card>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-  <app-stat-card
-    [titulo]="'Alertas Críticas'"
-    [valor]="8"
-    [subtexto]="'Stock por debajo del 10%'"
-    [color]="'red'">
-  </app-stat-card>
+    <app-stat-card
+      [titulo]="'Insumos Críticos'"
+      [valor]="cardInsumosValor()"
+      [subtexto]="cardInsumosSubtexto()"
+      [color]="'blue'">
+    </app-stat-card>
 
-  <app-stat-card
-    [titulo]="'Próxima Predicción'"
-    [valor]="'24 Horas'"
-    [subtexto]="'Siguiente corrida del modelo'"
-    [color]="'green'">
-  </app-stat-card>
+    <app-stat-card
+      [titulo]="'Alertas Activas'"
+      [valor]="cardAlertasValor()"
+      [subtexto]="cardAlertasSubtexto()"
+      [color]="'red'">
+    </app-stat-card>
 
-  <app-stat-card
-    [titulo]="'Próx. a Caducar'"
-    [valor]="23"
-    [subtexto]="'En los próximos 7 días'"
-    [color]="'yellow'">
-  </app-stat-card>
+    <app-stat-card
+      [titulo]="'Precisión IA'"
+      [valor]="cardPrediccionValor()"
+      [subtexto]="cardPrediccionSubtexto()"
+      [color]="'green'">
+    </app-stat-card>
 
-</div>
+    <app-stat-card
+      [titulo]="'Próx. a Caducar'"
+      [valor]="cardCaducidadValor()"
+      [subtexto]="cardCaducidadSubtexto()"
+      [color]="'yellow'">
+    </app-stat-card>
+
+  </div> <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-5">
+    <h3 class="text-lg font-semibold mb-4">Insumos Recientes</h3>
+    <app-dashboard-table></app-dashboard-table>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-5">
+    <h3 class="text-lg font-semibold mb-4">Predicción de Demanda</h3>
+    <app-dashboard-chart></app-dashboard-chart>
+  </div>
+
+</div> </div> 

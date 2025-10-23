@@ -8,7 +8,7 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { ApiService } from './api';
-import { WebSocketService } from './websocket';
+//import { WebSocketService } from './websocket';
 import { Alerta } from '../models/alerta.interface';
 
 @Injectable({
@@ -16,7 +16,7 @@ import { Alerta } from '../models/alerta.interface';
 })
 export class AlertaService {
   private apiService = inject(ApiService);
-  private wsService = inject(WebSocketService);
+  //private wsService = inject(WebSocketService);
   private endpoint = 'alertas';
 
   private alertasSubject = new BehaviorSubject<Alerta[]>([]);
@@ -25,16 +25,16 @@ export class AlertaService {
   constructor() {
       //WebSocketService
       //Conectamos el WebSocket tan pronto como se crea el servicio.
-      this.wsService.connect();
+      //this.wsService.connect();
 
       //Nos suscribimos a las nuevas alertas que llegan del WebSocket.
-      this.wsService.alertas$.subscribe((nuevaAlerta: Alerta) => {
+      //this.wsService.alertas$.subscribe((nuevaAlerta: Alerta) => {
         // Cuando llega una nueva alerta Obtenemos la lista actual de alertas
-        const alertasActuales = this.alertasSubject.getValue();
+        //const alertasActuales = this.alertasSubject.getValue();
         //Añadimos la nueva alerta al inicio de la lista
         //Emitimos la nueva lista actualizada a todos los suscriptores
-        this.alertasSubject.next([nuevaAlerta, ...alertasActuales]);
-      });
+        //this.alertasSubject.next([nuevaAlerta, ...alertasActuales]);
+     // });
     }
   public getAlertas(): Observable<Alerta[]> {
       return this.apiService.get<Alerta[]>(this.endpoint).pipe(

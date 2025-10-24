@@ -1,78 +1,47 @@
 <div class="overflow-x-auto shadow-md sm:rounded-lg">
-  <!-- 
-    Tu estructura de tabla con clases de Tailwind.
-    'w-full' - Ancho completo
-    'text-sm' - Texto pequeño
-    'text-left' - Texto alineado a la izquierda
-  -->
   <table class="w-full text-sm text-left text-gray-500">
-    <!-- Encabezado de la tabla -->
     <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-      <tr>
-        <th scope="col" class="px-6 py-3">
-          Insumo
-        </th>
-        <th scope="col" class="px-6 py-3">
-          Stock
-        </th>
-        <th scope="col" class="px-6 py-3">
-          Días Restantes
-        </th>
-        <th scope="col" class="px-6 py-3">
-          Nivel de Riesgo
-        </th>
-      </tr>
+    <tr>
+      <th scope="col" class="px-6 py-3">
+        Insumo
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Stock
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Días Restantes Estimados
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Nivel de Riesgo
+      </th>
+    </tr>
     </thead>
-    <!-- Cuerpo de la tabla -->
     <tbody>
-      <!-- 
-        Inicio del bucle *ngFor.
-        Esto crea una fila <tr> por cada 'insumo' en tu array 'insumos'.
-      -->
-      <tr *ngFor="let insumo of insumos" class="bg-white border-b hover:bg-gray-50">
-        
-        <!-- Celda Insumo -->
-        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-          {{ insumo.nombre }}
-        </th>
-        
-        <!-- Celda Stock (conservando tu 'unidadMedida') -->
-        <td class="px-6 py-4">
-          {{ insumo.stock }} {{ insumo.unidadMedida }}
-        </td>
-        
-        <!-- Celda Días Restantes -->
-        <td class="px-6 py-4">
-          {{ insumo.diasRestantes }}
-        </td>
-        
-        <!-- 
-          Celda Nivel de Riesgo (El Badge)
-          Aquí es donde llamamos a las funciones de tu archivo .ts
-        -->
-        <td class="px-6 py-4 whitespace-nowrap">
-          <!-- 
-            [ngClass] aplica las clases CSS (colores) que devuelve getBadgeClasses()
-          -->
-          <span [ngClass]="getBadgeClasses(insumo.diasRestantes)">
-            <!-- 
-              {{ ... }} muestra el texto (ej. "PRIORIDAD") que devuelve getNivelRiesgo()
-            -->
-            {{ getNivelRiesgo(insumo.diasRestantes) }}
-          </span>
-        </td>
-      </tr>
-      <!-- Fin del bucle -->
+    <tr *ngFor="let insumo of insumos" class="bg-white border-b hover:bg-gray-50">
 
-      <!-- 
-        Mensaje para cuando la tabla está vacía.
-        Se muestra solo si el array 'insumos' no existe o su longitud es 0.
-      -->
-      <tr *ngIf="!insumos || insumos.length === 0">
-        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-          No hay insumos para mostrar.
-        </td>
-      </tr>
+      <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+        {{ insumo.nombre }}
+      </th>
+
+      <td class="px-6 py-4">
+        {{ insumo.cantidadActual }} {{ insumo.unidadMedida }}
+      </td>
+
+      <td class="px-6 py-4">
+        {{ insumo.diasStockRestante }}
+      </td>
+
+      <td class="px-6 py-4 whitespace-nowrap">
+          <span [ngClass]="getBadgeClasses(insumo.diasStockRestante ?? 0)">
+            {{ getNivelRiesgo(insumo.diasStockRestante ?? 0) }}
+          </span>
+      </td>
+    </tr>
+    <tr *ngIf="!insumos || insumos.length === 0">
+      <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+        No hay insumos para mostrar.
+      </td>
+    </tr>
 
     </tbody>
   </table>

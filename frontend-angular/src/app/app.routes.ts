@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard';
-
+import { PrediccionesComponent } from './pages/predicciones/predicciones';
 
 export const routes: Routes = [
 
@@ -14,7 +14,7 @@ export const routes: Routes = [
     },
     {
       path: 'predicciones',
-      component: DashboardComponent // Placeholder
+      component: PrediccionesComponent // Placeholder
     },
     {
       path: 'caducidad',

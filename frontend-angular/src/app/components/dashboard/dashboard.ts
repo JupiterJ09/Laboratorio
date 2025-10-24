@@ -22,9 +22,9 @@ import { Insumo } from '../../models/insumo.interface';
   standalone: true, // 'standalone: true'
   imports: [
     CommonModule,
-    StatCardComponent,
+    StatCardComponent, // [NUEVO]
     DashboardTableComponent, // [NUEVO]
-    DashboardChartComponent  // [NUEVO]
+    DashboardChartComponent,// [NUEVO]
     ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
@@ -51,6 +51,9 @@ export class DashboardComponent implements OnInit {
   cardPrediccionValor = signal<number | string>('...');
   cardPrediccionSubtexto = signal('Cargando...');
 
+  // Signal para almacenar los insumos para la tabla
+  insumosParaTabla = signal<Insumo[]>([]);
+
   ngOnInit(): void {
       this.cargarEstadisticas();
     }
@@ -66,6 +69,7 @@ export class DashboardComponent implements OnInit {
       // (Usa el método que creaste en la Tarea 5.8)
       this.insumoService.getInsumosStockBajo().subscribe((insumos: Insumo[]) => {
         this.cardInsumosValor.set(insumos.length);
+        this.insumosParaTabla.set(insumos); // Guardamos los insumos para la tabla
         this.cardInsumosSubtexto.set('Insumos con stock bajo');
       });
 

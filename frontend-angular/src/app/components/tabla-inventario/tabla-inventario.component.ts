@@ -1,15 +1,16 @@
-import { Component, Input} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
 import { Insumo } from '../../models/insumo.interface';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
-  selector: 'app-dashboard-table',
-    standalone: true,
-    imports: [CommonModule],
-    templateUrl: './dashboard-table.html',
-    styleUrl: './dashboard-table.css'
+  selector: 'app-tabla-inventario',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './tabla-inventario.component.html',
+  styleUrl: './tabla-inventario.component.css'
 })
-export class DashboardTableComponent {
+export class TablaInventarioComponent {
   @Input() insumos: Insumo[] = [];
 
   constructor() {}
@@ -34,4 +35,5 @@ export class DashboardTableComponent {
     // Verde para 'SEGURO'
     return `${baseClasses} bg-green-200 text-green-800`;
   }
+
 }

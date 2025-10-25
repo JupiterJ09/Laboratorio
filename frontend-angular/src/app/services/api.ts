@@ -16,7 +16,7 @@ import { catchError } from 'rxjs/operators';
   })
 export class ApiService {
     //definimos la url
-    private readonly baseURL = 'http://localhost:8080/api';
+    private readonly baseURL = 'http://localhost:8081/api';
     //le inyectamos el httpclient
     private http = inject(HttpClient);
 

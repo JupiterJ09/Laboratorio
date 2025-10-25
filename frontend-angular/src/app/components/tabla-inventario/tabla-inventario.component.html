@@ -6,7 +6,7 @@
         Insumo
       </th>
       <th scope="col" class="px-6 py-3">
-        Stock
+        Stock Actual
       </th>
       <th scope="col" class="px-6 py-3">
         Días Restantes Estimados
@@ -28,7 +28,7 @@
       </td>
 
       <td class="px-6 py-4">
-        {{ insumo.diasStockRestante }}
+        {{ insumo.diasStockRestante ?? '-' }}
       </td>
 
       <td class="px-6 py-4 whitespace-nowrap">

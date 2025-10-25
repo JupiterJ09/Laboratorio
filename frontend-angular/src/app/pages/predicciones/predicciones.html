@@ -1,0 +1,72 @@
+<div class="container mx-auto p-4 md:p-6">
+  <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Generar Proyección de Demanda</h1>
+
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6 flex flex-col md:flex-row md:items-end gap-4">
+
+    <div class="flex-grow">
+      <label for="insumoSelect" class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Insumo</label>
+      <select id="insumoSelect" name="insumoSelect"
+              [(ngModel)]="insumoSeleccionadoId"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+        <option [ngValue]="null" disabled selected>-- Elija un insumo --</option>
+        <option *ngFor="let insumo of listaInsumos()" [ngValue]="insumo.id">
+          {{ insumo.nombre }} (ID: {{ insumo.id }})
+        </option>
+      </select>
+    </div>
+
+    <div class="w-full md:w-auto">
+      <label for="periodoInput" class="block text-sm font-medium text-gray-700 mb-1">Periodo (días)</label>
+      <input type="number" id="periodoInput" name="periodoInput" min="7" max="90" step="1"
+             [(ngModel)]="periodoDias"
+             class="mt-1 block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+             placeholder="Ej: 30">
+    </div>
+
+    <button (click)="generarProyeccion()"
+            [disabled]="!insumoSeleccionadoId() || isLoading()"
+            class="w-full md:w-auto mt-4 md:mt-0 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+      <span *ngIf="!isLoading()">Generar Proyección</span>
+      <span *ngIf="isLoading()">Generando...</span>
+    </button>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ chartTitle() }}</h2>
+
+    <div *ngIf="isLoading()" class="text-center py-10">
+      <p class="text-gray-500">Cargando datos del gráfico...</p>
+    </div>
+
+    <div *ngIf="!isLoading() && chartData().length > 0">
+      <app-grafico-prediccion
+        [datos]="chartData()"
+        [etiquetas]="chartLabels()"
+        [titulo]="chartTitle()">
+      </app-grafico-prediccion>
+    </div>
+
+    <div *ngIf="!isLoading() && chartData().length === 0 && insumoSeleccionadoId()" class="text-center py-10">
+      <p class="text-gray-500">No hay datos de predicción disponibles para este insumo.</p>
+    </div>
+    <div *ngIf="!isLoading() && !insumoSeleccionadoId()" class="text-center py-10">
+      <p class="text-gray-500">Seleccione un insumo y genere la proyección para ver el gráfico.</p>
+    </div>
+
+    <div *ngIf="!isLoading() && chartData().length > 0" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center border-t pt-4">
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Consumo Promedio (Simulado)</dt>
+        <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaPromedio() }} / día</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Días Restantes (Simulado)</dt>
+        <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaDiasRestantes() }}</dd>
+      </div>
+      <div>
+        <dt class="text-sm font-medium text-gray-500">Precisión Modelo (Simulado)</dt>
+        <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaPrecision() }}</dd>
+      </div>
+    </div>
+  </div>
+
+</div>

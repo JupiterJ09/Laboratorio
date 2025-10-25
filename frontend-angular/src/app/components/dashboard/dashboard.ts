@@ -17,6 +17,8 @@ import { PrediccionService } from '../../services/prediccion';
 
 // Importamos las interfaces para que 'alertas' no sea 'any'
 import { Insumo } from '../../models/insumo.interface';
+import { LoteService } from '../../services/lote';
+import { LoteCaducidadDTO } from '../../models/lote.interface';
 @Component({
   selector: 'app-dashboard',
   standalone: true, // 'standalone: true'
@@ -33,6 +35,8 @@ export class DashboardComponent implements OnInit {
   private alertaService = inject(AlertaService);
   private insumoService = inject(InsumoService);
   private prediccionService = inject(PrediccionService);
+  private loteService = inject(LoteService);
+
   // --- 2. Crear Signals (variables) para las 4 tarjetas ---
 
   // [ ] Mostrar: alertas
@@ -73,12 +77,20 @@ export class DashboardComponent implements OnInit {
         this.cardInsumosSubtexto.set('Insumos con stock bajo');
       });
 
-      // 3. Cargar Próximos a Caducar (Placeholder)
-      // (Aún no tienes un servicio para esto, así que ponemos datos fijos)
-      // TODO: Crear 'InsumoService.getProximosACaducar()'
-      this.cardCaducidadValor.set(23);
-      this.cardCaducidadSubtexto.set('En los próximos 7 días');
-
+      // 3. Cargar Lotes Próximos a Caducar
+      this.loteService.getLotesProximosACaducar(7).subscribe({
+        next: (lotes: LoteCaducidadDTO[]) => {
+          console.log('📦 Respuesta completa del backend:', lotes); // ✅ AGREGA ESTO
+          this.cardCaducidadValor.set(lotes.length);
+          this.cardCaducidadSubtexto.set('Lotes en los próximos 7 días');
+          console.log(`⏳ ${lotes.length} lotes próximos a caducar cargados.`);
+        },
+        error: (err: any) => {
+          console.error('❌ Error completo:', err); // ✅ AGREGA ESTO
+          this.cardCaducidadValor.set('Error');
+          this.cardCaducidadSubtexto.set('No se pudo cargar');
+        }
+      });
 
       // 4. Cargar Precisión IA (Placeholder)
       // (Tu servicio 'PrediccionService' aún no tiene un método para esto)

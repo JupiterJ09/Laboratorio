@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify
 from config import get_connection
 from datetime import datetime, timedelta
 
-prediccion_bp = Blueprint('prediccion', __name__)
+# ✅ CAMBIO IMPORTANTE: Agregar url_prefix='/api/prediccion'
+prediccion_bp = Blueprint('prediccion', __name__, url_prefix='/api/prediccion')
 
 # ----------------------------
 # Endpoint para predecir insumo
@@ -85,7 +86,7 @@ def predecir_insumo(insumo_id):
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
     finally:
         if cursor:
             cursor.close()
@@ -102,6 +103,6 @@ def obtener_precision():
         # Por ahora devolvemos un valor fijo para probar
         precision = 92  # reemplaza con tu cálculo real si lo tienes
 
-        return jsonify({"precision": precision})
+        return jsonify({"precision": precision}), 200
     except Exception as e:
         return jsonify({"error": f"No se pudo obtener la precisión: {str(e)}"}), 500

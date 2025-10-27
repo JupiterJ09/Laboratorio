@@ -9,8 +9,13 @@ import java.util.Map;
 @Service
 public class IAClientService {
 
-    private final String IA_API_URL = "http://127.0.0.1:5000"; // URL del backend Flask
+    // ✅ URL del backend Flask
+    private final String IA_API_URL = "http://localhost:5000/api/prediccion";
 
+    /**
+     * Obtiene la predicción de un insumo específico desde Flask.
+     * Llama a: GET http://localhost:5000/api/prediccion/predecir/{insumoId}
+     */
     public Map<String, Object> obtenerPrediccion(Long insumoId) {
         try {
             String url = IA_API_URL + "/predecir/" + insumoId;
@@ -29,11 +34,12 @@ public class IAClientService {
     }
 
     /**
-     * Llama al endpoint Flask que devuelve la precisión del modelo.
+     * Obtiene la precisión del modelo de IA desde Flask.
+     * Llama a: GET http://localhost:5000/api/prediccion/precision
      */
     public Map<String, Object> obtenerPrecisionIA() {
         try {
-            String url = IA_API_URL + "/prediccion/precision";
+            String url = IA_API_URL + "/precision"; // ✅ CORREGIDO
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
 

@@ -1,12 +1,12 @@
 /**
  * Archivo lote.ts
  * Servicio para gestionar lotes
- * Actualizado: 24/10/2025
+ * Actualizado: 25/10/2025
  */
 
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiService } from './api';
+import { Observable, map } from 'rxjs';
+import { ApiService } from './api'; // Asegúrate de que la ruta sea correcta
 import { Lote, LoteCaducidadDTO } from '../models/lote.interface'; // ✅ Importar desde la interfaz
 
 @Injectable({
@@ -53,7 +53,23 @@ export class LoteService {
    */
   public getLotesProximosACaducar(dias: number = 7): Observable<LoteCaducidadDTO[]> {
     console.log(`📦 Llamando a API para lotes próximos a caducar en ${dias} días...`);
-    return this.apiService.get<LoteCaducidadDTO[]>(`${this.endpoint}/proximos-caducar?dias=${dias}`);
+    return this.apiService.get<LoteCaducidadDTO[]>(`${this.endpoint}/proximos-caducar?dias=${dias}`).pipe(
+      map(lotes => lotes.map(lote => {
+        // Calculamos el nivel de alerta en el frontend basado en los días para caducar
+        if (lote.estaVencido) {
+          lote.nivelAlerta = 'CRITICA';
+        } else if (lote.diasParaCaducar <= 7) {
+          lote.nivelAlerta = 'CRITICA';
+        } else if (lote.diasParaCaducar <= 30) {
+          lote.nivelAlerta = 'ALTA';
+        } else if (lote.diasParaCaducar <= 90) {
+          lote.nivelAlerta = 'MEDIA';
+        } else {
+          lote.nivelAlerta = 'BAJA';
+        }
+        return lote;
+      }))
+    );
   }
 
   /**

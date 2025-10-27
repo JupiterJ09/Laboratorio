@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { PrediccionesComponent } from './pages/predicciones/predicciones';
+import { Inventario } from './pages/inventario/inventario';
 
 export const routes: Routes = [
 
@@ -10,7 +11,7 @@ export const routes: Routes = [
     },
     {
       path: 'inventario',
-      component: DashboardComponent // Placeholder
+      component: Inventario // Placeholder
     },
     {
       path: 'predicciones',

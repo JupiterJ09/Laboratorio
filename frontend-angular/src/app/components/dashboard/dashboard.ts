@@ -18,6 +18,7 @@ import { PrediccionService } from '../../services/prediccion';
 // Importamos las interfaces para que 'alertas' no sea 'any'
 import { Insumo } from '../../models/insumo.interface';
 import { LoteService } from '../../services/lote';
+import { PanelAlertas } from '../panel-alertas/panel-alertas'; // Importación corregida para usar el archivo panel-alertas.ts
 import { LoteCaducidadDTO } from '../../models/lote.interface';
 @Component({
   selector: 'app-dashboard',
@@ -27,6 +28,7 @@ import { LoteCaducidadDTO } from '../../models/lote.interface';
     StatCardComponent, // [NUEVO]
     DashboardTableComponent, // [NUEVO]
     DashboardChartComponent,// [NUEVO]
+    PanelAlertas // Usamos la clase PanelAlertas del archivo panel-alertas.ts
     ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
@@ -57,6 +59,7 @@ export class DashboardComponent implements OnInit {
 
   // Signal para almacenar los insumos para la tabla
   insumosParaTabla = signal<Insumo[]>([]);
+  isLoadingInsumos = signal<boolean>(false); // Signal para el estado de carga de la tabla
 
   ngOnInit(): void {
       this.cargarEstadisticas();
@@ -71,22 +74,31 @@ export class DashboardComponent implements OnInit {
 
       // 2. Cargar Insumos Críticos
       // (Usa el método que creaste en la Tarea 5.8)
-      this.insumoService.getInsumosStockBajo().subscribe((insumos: Insumo[]) => {
-        this.cardInsumosValor.set(insumos.length);
-        this.insumosParaTabla.set(insumos); // Guardamos los insumos para la tabla
-        this.cardInsumosSubtexto.set('Insumos con stock bajo');
+      this.isLoadingInsumos.set(true); // Inicia la carga
+      this.insumoService.getInsumosStockBajo().subscribe({
+        next: (insumos: Insumo[]) => {
+          this.cardInsumosValor.set(insumos.length);
+          this.insumosParaTabla.set(insumos); // Guardamos los insumos para la tabla
+          this.cardInsumosSubtexto.set('Insumos con stock bajo');
+          this.isLoadingInsumos.set(false); // Finaliza la carga
+        },
+        error: (err) => {
+          console.error('Error cargando insumos críticos:', err);
+          this.cardInsumosValor.set('Error');
+          this.isLoadingInsumos.set(false); // Finaliza la carga en caso de error
+        }
       });
 
       // 3. Cargar Lotes Próximos a Caducar
       this.loteService.getLotesProximosACaducar(7).subscribe({
         next: (lotes: LoteCaducidadDTO[]) => {
-          console.log('📦 Respuesta completa del backend:', lotes); // ✅ AGREGA ESTO
+          console.log('📦 Respuesta completa del backend:', lotes); 
           this.cardCaducidadValor.set(lotes.length);
           this.cardCaducidadSubtexto.set('Lotes en los próximos 7 días');
           console.log(`⏳ ${lotes.length} lotes próximos a caducar cargados.`);
         },
         error: (err: any) => {
-          console.error('❌ Error completo:', err); // ✅ AGREGA ESTO
+          console.error('❌ Error completo:', err); 
           this.cardCaducidadValor.set('Error');
           this.cardCaducidadSubtexto.set('No se pudo cargar');
         }

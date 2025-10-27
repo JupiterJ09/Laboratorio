@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TablaInventarioComponent } from './tabla-inventario.component';
+import { Inventario } from './inventario';
 
-describe('TablaInventarioComponent', () => {
-  let component: TablaInventarioComponent;
-  let fixture: ComponentFixture<TablaInventarioComponent>;
+describe('Inventario', () => {
+  let component: Inventario;
+  let fixture: ComponentFixture<Inventario>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TablaInventarioComponent]
+      imports: [Inventario]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(TablaInventarioComponent);
+    fixture = TestBed.createComponent(Inventario);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

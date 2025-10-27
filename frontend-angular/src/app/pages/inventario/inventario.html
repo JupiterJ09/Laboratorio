@@ -1,0 +1,95 @@
+<div class="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Cabecera -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Inventario General</h1>
+      <p class="text-gray-600">Gestiona y visualiza todos los insumos del laboratorio.</p>
+    </div>
+
+    <!-- Panel de Filtros y Búsqueda -->
+    <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Búsqueda por Nombre -->
+        <div>
+          <label for="search" class="block text-sm font-medium text-gray-700">Buscar por nombre</label>
+          <input
+            type="text"
+            id="search"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Ej: Guantes de Nitrilo"
+            [(ngModel)]="terminoBusqueda"
+            (ngModelChange)="onFiltroChange()">
+        </div>
+
+        <!-- Filtro por Categoría -->
+        <div>
+          <label for="category" class="block text-sm font-medium text-gray-700">Categoría</label>
+          <select
+            id="category"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            [(ngModel)]="categoriaSeleccionada"
+            (ngModelChange)="onFiltroChange()">
+            @for(cat of categorias(); track cat) {
+              <option [value]="cat">{{ cat | titlecase }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Filtro por Stock Bajo -->
+        <div class="flex items-end">
+          <div class="flex items-center">
+            <input
+              id="stock-bajo"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              [(ngModel)]="mostrarSoloStockBajo"
+              (ngModelChange)="onFiltroChange()">
+            <label for="stock-bajo" class="ml-2 block text-sm text-gray-900">Mostrar solo stock bajo</label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tabla de Insumos -->
+    @if (isLoading()) {
+      <div class="flex justify-center items-center h-64 bg-white rounded-lg shadow-md">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <span class="ml-4 text-gray-500">Cargando inventario...</span>
+      </div>
+    } @else {
+      <app-dashboard-table [insumos]="insumosPaginados()"></app-dashboard-table>
+    }
+
+    <!-- Controles de Paginación -->
+    <div class="mt-6 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-md">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <!-- Paginación Móvil (simplificada) -->
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Mostrando <span class="font-medium">{{ insumosPaginados().length }}</span> de <span class="font-medium">{{ insumosFiltrados().length }}</span> resultados
+          </p>
+        </div>
+        <div>
+          <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <button (click)="irAPagina(paginaActual() - 1)" [disabled]="paginaActual() === 1" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">Anterior</button>
+            <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+            <button (click)="irAPagina(paginaActual() + 1)" [disabled]="paginaActual() === totalPaginas()" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">Siguiente</button>
+          </nav>
+        </div>
+        <div>
+          <select (change)="cambiarItemsPorPagina($event)" class="rounded-md border-gray-300 text-sm">
+            <option value="10">10 por página</option>
+            <option value="25">25 por página</option>
+            <option value="50">50 por página</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

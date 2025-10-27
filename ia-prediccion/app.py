@@ -26,5 +26,18 @@ def test_db():
     except Exception as e:
         return jsonify({"message": f"No se pudo conectar a MySQL ❌: {e}"}), 500
 
+        # Nueva ruta de salud
+@app.route('/health', methods=['GET'])
+def health_check():
+    conn = get_connection()
+    status = "OK" if conn else "ERROR"
+    if conn:
+        conn.close()
+    return jsonify({
+        "status": status,
+        "servicio": "IA Predicción",
+        "version": "1.0"
+    })
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -27,5 +27,26 @@ public class IAClientService {
             return Map.of("error", "No se pudo conectar al servicio Flask: " + e.getMessage());
         }
     }
-}
 
+    /**
+     * Llama al endpoint Flask que devuelve la precisión del modelo.
+     */
+    public Map<String, Object> obtenerPrecisionIA() {
+        try {
+            String url = IA_API_URL + "/prediccion/precision";
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                Map<String, Object> data = response.getBody();
+                Object valor = data.get("precision") != null ? data.get("precision") : 0;
+                return Map.of("precision", valor);
+            } else {
+                return Map.of("error", "Error al obtener precisión desde Flask");
+            }
+
+        } catch (Exception e) {
+            return Map.of("error", "No se pudo conectar al servicio Flask: " + e.getMessage());
+        }
+    }
+}

@@ -2,21 +2,19 @@
  * @file predicciones.ts
  * @description Página para visualizar y generar predicciones de demanda de insumos.
  * @author David Alcázar Gómez
- * @date 2025-10-23
+ * @date 2025-10-27
  */
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // 1. Importa FormsModule para [(ngModel)]
+import { FormsModule } from '@angular/forms'; // Importa FormsModule para [(ngModel)]
 
-// 2. Importa el servicio y la interfaz de Insumo
+// Importa servicios e interfaces
 import { InsumoService } from '../../services/insumo';
 import { Insumo } from '../../models/insumo.interface';
-
-// 3. Importa el servicio y la interfaz de Prediccion (¡Recuerda verificarla!)
 import { PrediccionService } from '../../services/prediccion';
-import { Prediccion } from '../../models/prediccion.interface';
+import { RespuestaPrediccion } from '../../models/prediccion.interface'; // Correcta importación
 
-// 4. Importa el componente del gráfico que ya creaste
+// Importa el componente del gráfico
 import { GraficoPrediccionComponent } from '../../components/grafico-prediccion/grafico-prediccion';
 
 @Component({
@@ -24,8 +22,8 @@ import { GraficoPrediccionComponent } from '../../components/grafico-prediccion/
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule, // 5. Añade FormsModule
-    GraficoPrediccionComponent // 6. Añade el componente del gráfico
+    FormsModule,
+    GraficoPrediccionComponent
   ],
   templateUrl: './predicciones.html',
   styleUrl: './predicciones.css'
@@ -37,27 +35,23 @@ export class PrediccionesComponent implements OnInit {
   private prediccionService = inject(PrediccionService);
 
   // --- Estado del Componente (Signals) ---
-  // [ ] Select para elegir insumo
   listaInsumos = signal<Insumo[]>([]);
   insumoSeleccionadoId = signal<number | null>(null);
-
-  // [ ] Input para periodo (mes) - Asumimos un número de días por simplicidad
-  periodoDias = signal<number>(30); // Por defecto, 30 días
+  periodoDias = signal<number>(30);
 
   // Datos para el gráfico
   chartData = signal<number[]>([]);
   chartLabels = signal<string[]>([]);
   chartTitle = signal('Seleccione un insumo para ver la predicción');
 
-  // [ ] Mostrar métricas: promedio, días restantes, precisión
+  // Métricas
   metricaPromedio = signal<number | string>('--');
   metricaDiasRestantes = signal<number | string>('--');
   metricaPrecision = signal<number | string>('--');
 
-  isLoading = signal(false); // Para mostrar un indicador de carga
+  isLoading = signal(false);
 
   ngOnInit(): void {
-    // Carga la lista de insumos al iniciar
     this.cargarListaInsumos();
   }
 
@@ -66,63 +60,78 @@ export class PrediccionesComponent implements OnInit {
    */
   private cargarListaInsumos(): void {
     this.insumoService.getInsumosActivos().subscribe({
-      next: (insumos) => {
+      next: (insumos: Insumo[]) => { // Añadido tipo explícito
         this.listaInsumos.set(insumos);
-        // Opcional: Seleccionar el primer insumo por defecto
-        if (insumos.length > 0) {
-          // this.insumoSeleccionadoId.set(insumos[0].id);
-          // this.generarProyeccion(); // Y cargar su gráfico
-        }
       },
-      error: (err) => console.error('Error al cargar insumos:', err)
+      error: (err: any) => console.error('Error al cargar insumos:', err) // Añadido tipo explícito
     });
   }
 
   /**
-   * [ ] Botón "Generar Proyección" - Lógica
-   * Llama al servicio de predicción cuando se hace clic.
+   * Llama al servicio de predicción cuando se hace clic en "Generar Proyección".
    */
   generarProyeccion(): void {
     const id = this.insumoSeleccionadoId();
     if (id === null) {
       this.chartTitle.set('Por favor, seleccione un insumo');
-      return; // No hacer nada si no hay insumo seleccionado
+      return;
     }
 
     this.isLoading.set(true);
     this.chartTitle.set(`Cargando predicción para Insumo #${id}...`);
-    this.chartData.set([]); // Limpiar gráfico anterior
+    this.chartData.set([]);
     this.chartLabels.set([]);
     this.metricaPromedio.set('--');
     this.metricaDiasRestantes.set('--');
     this.metricaPrecision.set('--');
 
-    // Llama al servicio (usará datos simulados si el backend no responde)
     this.prediccionService.getPrediccion(id).subscribe({
-      next: (prediccion: any) => { // Usa 'any' temporalmente
-        console.log('Predicción recibida:', prediccion);
+      next: (respuesta: RespuestaPrediccion) => { // Usa la interfaz correcta
+        console.log('📈 Predicción REAL recibida:', respuesta);
 
-        // --- Simulación (Borrar/Adaptar con datos reales) ---
-        const dias = this.periodoDias();
-        const datosSimulados = Array.from({ length: dias }, (_, i) => 100 - (i * (100 / (dias -1 || 1) )) ); // Simula descenso lineal
-        const etiquetasSimuladas = Array.from({ length: dias }, (_, i) => `Día ${i + 1}`);
-        const insumoNombre = this.listaInsumos().find(ins => ins.id === id)?.nombre || `Insumo #${id}`;
-        // --- Fin Simulación ---
+        // Extrae los datos REALES del array 'proyeccion_30_dias'
+        const proyeccion = respuesta.proyeccion_30_dias || [];
+        const datosReales = proyeccion.map(dia => dia.stock_estimado);
+        const etiquetasReales = proyeccion.map(dia => dia.fecha);
 
-        // Actualiza los signals para el gráfico y métricas
-        // TODO: Usar datos reales de 'prediccion'
-        this.chartData.set(datosSimulados);
-        this.chartLabels.set(etiquetasSimuladas);
-        this.chartTitle.set(`Proyección de ${dias} días para ${insumoNombre}`);
+        const insumoNombre = respuesta.nombre_insumo || `Insumo #${id}`;
+        const diasProyectados = proyeccion.length;
 
-        // TODO: Calcular/Obtener métricas reales
-        this.metricaPromedio.set( (datosSimulados.reduce((a, b) => a + b, 0) / dias).toFixed(1) );
-        this.metricaDiasRestantes.set(dias); // Simulación
-        this.metricaPrecision.set('92.5%'); // Simulación
+        // Actualiza los signals para el gráfico con datos REALES
+        if (datosReales.length > 0) {
+          this.chartData.set(datosReales);
+          this.chartLabels.set(etiquetasReales);
+          this.chartTitle.set(`Proyección de ${diasProyectados} días para ${insumoNombre}`);
+        } else {
+            console.warn('La predicción recibida no contiene datos en proyeccion_30_dias');
+            this.chartTitle.set(`No hay datos de predicción para ${insumoNombre}`);
+            this.chartData.set([]);
+            this.chartLabels.set([]);
+        }
+
+        // Calcula/Obtiene métricas REALES (si vienen en la respuesta)
+        const respuestaAny = respuesta as any; // Usamos 'as any' para acceder a props no definidas en la interfaz base
+
+        // --- ¡CORRECCIÓN AQUÍ! ---
+        const promedioStr = respuestaAny.promedio_diario; // Obtiene el string "1.90"
+        const promedioNum = parseFloat(promedioStr); // Convierte a número 1.9
+        this.metricaPromedio.set(!isNaN(promedioNum) ? promedioNum.toFixed(1) : '--'); // Formatea si es válido
+        // --- Fin Corrección ---
+
+        // Asumiendo que dias_restantes también puede ser string o null
+        const diasRestantesStr = respuestaAny.dias_restantes;
+        const diasRestantesNum = parseInt(diasRestantesStr, 10); // Convierte a entero
+        this.metricaDiasRestantes.set(!isNaN(diasRestantesNum) ? diasRestantesNum.toFixed(0) : 'N/A');
+
+        // La precisión sigue simulada por ahora
+        this.prediccionService.getPrecisionIA().subscribe(data => {
+            const precisionValue = typeof data.precision === 'number' ? `${data.precision.toFixed(1)}%` : data.precision;
+            this.metricaPrecision.set(precisionValue || '--');
+        });
 
         this.isLoading.set(false);
       },
-      error: (err) => {
+      error: (err: any) => { // Añadido tipo explícito
         console.error('Error al generar proyección:', err);
         this.chartTitle.set(`Error al cargar predicción para Insumo #${id}`);
         this.isLoading.set(false);

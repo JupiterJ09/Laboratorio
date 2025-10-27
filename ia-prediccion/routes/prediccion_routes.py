@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 
 prediccion_bp = Blueprint('prediccion', __name__)
 
+# ----------------------------
+# Endpoint para predecir insumo
+# ----------------------------
 @prediccion_bp.route('/predecir/<int:insumo_id>', methods=['GET'])
 def predecir_insumo(insumo_id):
     conn = None
@@ -11,7 +14,6 @@ def predecir_insumo(insumo_id):
     try:
         conn = get_connection()
         cursor = conn.cursor()
-
 
         # 1️⃣ Datos base del insumo
         cursor.execute("""
@@ -89,3 +91,17 @@ def predecir_insumo(insumo_id):
             cursor.close()
         if conn:
             conn.close()
+
+# ----------------------------
+# NUEVO: Endpoint para precisión del modelo
+# ----------------------------
+@prediccion_bp.route('/precision', methods=['GET'])
+def obtener_precision():
+    try:
+        # Aquí colocas tu lógica real para calcular precisión del modelo IA
+        # Por ahora devolvemos un valor fijo para probar
+        precision = 92  # reemplaza con tu cálculo real si lo tienes
+
+        return jsonify({"precision": precision})
+    except Exception as e:
+        return jsonify({"error": f"No se pudo obtener la precisión: {str(e)}"}), 500

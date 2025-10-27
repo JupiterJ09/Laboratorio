@@ -92,10 +92,24 @@ export class DashboardComponent implements OnInit {
         }
       });
 
-      // 4. Cargar Precisión IA (Placeholder)
-      // (Tu servicio 'PrediccionService' aún no tiene un método para esto)
-      // TODO: Crear 'PrediccionService.getPrecisionIA()'
-      this.cardPrediccionValor.set('92.5%');
-      this.cardPrediccionSubtexto.set('Precisión del modelo');
+      // 4. Cargar Precisión IA desde Flask vía Spring Boot
+      this.prediccionService.getPrecisionIA().subscribe({
+        next: (data) => {
+          const precision = data?.precision ?? null;
+          if (precision !== null) {
+            this.cardPrediccionValor.set(`${precision}%`);
+            this.cardPrediccionSubtexto.set('Precisión del modelo IA');
+          } else {
+            this.cardPrediccionValor.set('N/A');
+            this.cardPrediccionSubtexto.set('No disponible');
+          }
+        },
+        error: (err) => {
+          console.error('❌ Error al obtener precisión de la IA:', err);
+          this.cardPrediccionValor.set('Error');
+          this.cardPrediccionSubtexto.set('No se pudo conectar al servidor');
+        }
+      });
+
     }
 }

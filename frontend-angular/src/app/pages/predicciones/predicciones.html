@@ -55,15 +55,15 @@
 
     <div *ngIf="!isLoading() && chartData().length > 0" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center border-t pt-4">
       <div>
-        <dt class="text-sm font-medium text-gray-500">Consumo Promedio (Simulado)</dt>
+        <dt class="text-sm font-medium text-gray-500">Consumo Promedio</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaPromedio() }} / día</dd>
       </div>
       <div>
-        <dt class="text-sm font-medium text-gray-500">Días Restantes (Simulado)</dt>
+        <dt class="text-sm font-medium text-gray-500">Días Restantes</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaDiasRestantes() }}</dd>
       </div>
       <div>
-        <dt class="text-sm font-medium text-gray-500">Precisión Modelo (Simulado)</dt>
+        <dt class="text-sm font-medium text-gray-500">Precisión Modelo</dt>
         <dd class="mt-1 text-xl font-semibold text-gray-900">{{ metricaPrecision() }}</dd>
       </div>
     </div>

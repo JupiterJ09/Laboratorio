@@ -1,29 +1,37 @@
 /**
- *archivo prediccion.ts
- *Servicio para gestionar la logica de negocio de las predicciones
- *hecho 20/10/25 Alcazardavid, 5.9
+ * @file prediccion.service.ts
+ * @description Servicio para interactuar con la API de Predicciones (proxy Java → Flask)
  */
 
- import { Injectable, inject } from '@angular/core';
- import { Observable } from 'rxjs';
- import { ApiService } from './api';
- import { Prediccion } from '../models/prediccion.interface';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ApiService } from './api';
+import { RespuestaPrediccion } from '../models/prediccion.interface';
 
- @Injectable({
-    providedIn: 'root'
-   })
- export class PrediccionService {
-    private apiService = inject(ApiService);
-    private endpoint = 'prediccion';
+@Injectable({
+  providedIn: 'root'
+})
+export class PrediccionService {
+  private apiService = inject(ApiService);
+  private endpoint = 'prediccion';
 
-    constructor() { }
+  constructor() {}
 
-    public getPrediccion(insumoId: number): Observable<Prediccion> {
-        // Esto llamará a: GET http://localhost:8080/api/prediccion/{insumoId}
-        return this.apiService.get<Prediccion>(`${this.endpoint}/${insumoId}`);
-      }
-    public getTopCriticos(): Observable<any[]> { // Puedes cambiar 'any[]' por una interfaz si la tienes
-        // Esto llamará a: GET http://localhost:8080/api/prediccion/top-criticos
-        return this.apiService.get<any[]>(`${this.endpoint}/top-criticos`);
-      }
- }
+  /**
+   * Obtiene la predicción para un insumo desde el backend Java.
+   * Llama a: GET /api/prediccion/{insumoId}
+   */
+  public getPrediccion(insumoId: number): Observable<RespuestaPrediccion> {
+    console.log(`🧠 Llamando a API Java para predicción: ${this.endpoint}/${insumoId}`);
+    return this.apiService.get<RespuestaPrediccion>(`${this.endpoint}/${insumoId}`);
+  }
+
+  /**
+   * Obtiene la precisión actual del modelo de IA desde el backend Java.
+   * Llama a: GET /api/prediccion/precision
+   */
+  public getPrecisionIA(): Observable<{ precision: number }> {
+    console.log('📊 Solicitando precisión de IA al backend Java');
+    return this.apiService.get<{ precision: number }>(`${this.endpoint}/precision`);
+  }
+}

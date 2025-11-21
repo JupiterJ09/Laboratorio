@@ -1,87 +1,113 @@
 /**
- * Archivo alerta.service.ts
- * Servicio para gestionar las alertas, combina peticiones HTTP con mensajes WebSocket
- * Actualizado: 24/10/2025
+ * @file alerta.service.ts
+ * @description Servicio para gestionar alertas usando datos mock
+ * @description (Versión optimizada para presentación sin WebSocket)
+ * @author AniAra
+ * @date 2025-11-21
  */
 
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { ApiService } from './api';
-import { WebSocketService } from './websocket';
+import { BehaviorSubject, Observable, map, interval } from 'rxjs';
+import { ApiMockService } from './api-mock.service';
 import { Alerta } from '../models/alerta.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlertaService {
-  private apiService = inject(ApiService);
-  private wsService = inject(WebSocketService); // ✅ Activado
-  private endpoint = 'alertas';
+  private apiMock = inject(ApiMockService);
 
   private alertasSubject = new BehaviorSubject<Alerta[]>([]);
   public alertas$ = this.alertasSubject.asObservable();
 
   constructor() {
-    console.log('🚀 AlertaService inicializado');
-
-    // ✅ Conectar WebSocket al iniciar el servicio
-    this.wsService.connect();
-
-    // ✅ Suscribirse a las nuevas alertas del WebSocket
-    this.wsService.alertas$.subscribe({
-      next: (nuevaAlerta: Alerta) => {
-        console.log('🔔 Nueva alerta recibida por WebSocket:', nuevaAlerta);
-
-        // Obtener la lista actual de alertas
-        const alertasActuales = this.alertasSubject.getValue();
-
-        // Verificar si ya existe (evitar duplicados)
-        const existe = alertasActuales.some(a => a.id === nuevaAlerta.id);
-
-        if (!existe) {
-          // Añadir la nueva alerta al inicio de la lista
-          this.alertasSubject.next([nuevaAlerta, ...alertasActuales]);
-          console.log('✅ Alerta añadida a la lista');
-
-          // Opcional: Mostrar notificación del navegador
-          this.mostrarNotificacionNativa(nuevaAlerta);
-        } else {
-          console.log('⚠️ Alerta duplicada, no se añade');
-        }
-      },
-      error: (error: any) => {
-        console.error('❌ Error en suscripción de alertas:', error);
-      }
-    });
-
-    // ✅ Cargar alertas iniciales desde la API
+    console.log('🚀 AlertaService inicializado con datos mock');
+    
+    // Cargar alertas iniciales
     this.cargarAlertasIniciales();
+    
+    // Simular nuevas alertas cada 30 segundos (opcional para demo)
+    this.simularAlertasEnTiempoReal();
   }
 
   /**
-   * Cargar alertas iniciales al iniciar el servicio
+   * Cargar alertas iniciales desde el servicio mock
    */
   private cargarAlertasIniciales(): void {
-    console.log('📥 Cargando alertas iniciales...');
-    this.getAlertas().subscribe({
+    console.log('📥 Cargando alertas iniciales desde mock...');
+    this.apiMock.getAlertas().subscribe({
       next: (alertas) => {
-        console.log(`✅ ${alertas.length} alertas cargadas desde la API`);
+        this.alertasSubject.next(alertas);
+        console.log(`✅ ${alertas.length} alertas cargadas desde mock`);
       },
       error: (error) => {
-        console.error('❌ Error al cargar alertas iniciales:', error);
+        console.error('❌ Error al cargar alertas mock:', error);
       }
     });
   }
 
   /**
-   * Obtener todas las alertas desde la API
+   * Simula la llegada de nuevas alertas en tiempo real
+   * (para hacer la demo más dinámica)
+   */
+  private simularAlertasEnTiempoReal(): void {
+    // Cada 45 segundos, genera una nueva alerta aleatoria
+    interval(45000).subscribe(() => {
+      const probabilidad = Math.random();
+      
+      // Solo generar alerta el 40% de las veces
+      if (probabilidad < 0.4) {
+        const tiposAlerta = [
+          {
+            tipo: 'STOCK_BAJO' as const,
+            prioridad: 'ALTA' as const,
+            titulo: 'Stock Bajo Detectado',
+            mensaje: 'Se ha detectado stock bajo en un insumo crítico',
+            icono: '📦',
+            color: 'orange'
+          },
+          {
+            tipo: 'AGOTAMIENTO_PROXIMO' as const,
+            prioridad: 'MEDIA' as const,
+            titulo: 'Agotamiento Próximo',
+            mensaje: 'Un insumo se agotará en los próximos días',
+            icono: '⏰',
+            color: 'yellow'
+          },
+          {
+            tipo: 'SISTEMA' as const,
+            prioridad: 'BAJA' as const,
+            titulo: 'Actualización de Sistema',
+            mensaje: 'Los datos han sido actualizados correctamente',
+            icono: '⚙️',
+            color: 'blue'
+          }
+        ];
+        
+        const alertaAleatoria = tiposAlerta[Math.floor(Math.random() * tiposAlerta.length)];
+        
+        this.apiMock.agregarAlerta({
+          ...alertaAleatoria,
+          esUrgente: alertaAleatoria.prioridad === 'ALTA'
+        });
+        
+        // Recargar alertas para reflejar la nueva
+        this.recargar();
+        
+        console.log('🔔 Nueva alerta simulada generada:', alertaAleatoria.titulo);
+      }
+    });
+  }
+
+  /**
+   * Obtener todas las alertas desde el servicio mock
    */
   public getAlertas(): Observable<Alerta[]> {
-    return this.apiService.get<Alerta[]>(this.endpoint).pipe(
-      tap(alertas => {
-        // Actualizar el Subject con las alertas de la API
+    return this.apiMock.getAlertas().pipe(
+      map(alertas => {
         this.alertasSubject.next(alertas);
-        console.log('📊 Subject actualizado con alertas de la API');
+        console.log('📊 Alertas actualizadas en el Subject');
+        return alertas;
       })
     );
   }
@@ -108,19 +134,24 @@ export class AlertaService {
    * Marcar una alerta como leída
    */
   public marcarComoLeida(id: number): Observable<Alerta> {
-    return this.apiService.put<Alerta>(`${this.endpoint}/${id}/leer`, {}).pipe(
-      tap(alertaActualizada => {
-        console.log('✅ Alerta marcada como leída:', id);
-
-        // Actualizar la lista local
-        const alertas = this.alertasSubject.getValue();
-        const indice = alertas.findIndex(a => a.id === id);
-
-        if (indice !== -1) {
-          alertas[indice] = alertaActualizada;
-          this.alertasSubject.next([...alertas]);
-          console.log('📊 Lista local actualizada');
+    return this.apiMock.marcarAlertaComoLeida(id).pipe(
+      map(alertaActualizada => {
+        if (alertaActualizada) {
+          console.log('✅ Alerta marcada como leída:', id);
+          
+          // Actualizar la lista local
+          const alertas = this.alertasSubject.getValue();
+          const indice = alertas.findIndex(a => a.id === id);
+          
+          if (indice !== -1) {
+            alertas[indice] = alertaActualizada;
+            this.alertasSubject.next([...alertas]);
+            console.log('📊 Lista local actualizada');
+          }
+          
+          return alertaActualizada;
         }
+        throw new Error('Alerta no encontrada');
       })
     );
   }
@@ -129,90 +160,53 @@ export class AlertaService {
    * Marcar todas las alertas como leídas
    */
   public marcarTodasComoLeidas(): Observable<void> {
-    return this.apiService.put<void>(`${this.endpoint}/leer-todas`, {}).pipe(
-      tap(() => {
-        console.log('✅ Todas las alertas marcadas como leídas');
-
-        // Actualizar la lista local
-        const alertas = this.alertasSubject.getValue();
-        const alertasActualizadas = alertas.map(a => ({ ...a, leida: true }));
-        this.alertasSubject.next(alertasActualizadas);
-      })
-    );
+    const alertas = this.alertasSubject.getValue();
+    const alertasActualizadas = alertas.map(a => ({ ...a, leida: true }));
+    this.alertasSubject.next(alertasActualizadas);
+    
+    console.log('✅ Todas las alertas marcadas como leídas');
+    
+    return new Observable(subscriber => {
+      subscriber.next();
+      subscriber.complete();
+    });
   }
 
   /**
    * Eliminar una alerta
    */
   public eliminarAlerta(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.endpoint}/${id}`).pipe(
-      tap(() => {
-        console.log('✅ Alerta eliminada:', id);
-
-        // Remover de la lista local
-        const alertas = this.alertasSubject.getValue();
-        const alertasFiltradas = alertas.filter(a => a.id !== id);
-        this.alertasSubject.next(alertasFiltradas);
-      })
-    );
+    const alertas = this.alertasSubject.getValue();
+    const alertasFiltradas = alertas.filter(a => a.id !== id);
+    this.alertasSubject.next(alertasFiltradas);
+    
+    console.log('✅ Alerta eliminada:', id);
+    
+    return new Observable(subscriber => {
+      subscriber.next();
+      subscriber.complete();
+    });
   }
 
   /**
-   * Recargar alertas desde la API
+   * Recargar alertas desde el servicio mock
    */
   public recargar(): void {
-    console.log('🔄 Recargando alertas...');
+    console.log('🔄 Recargando alertas desde mock...');
     this.getAlertas().subscribe();
   }
 
   /**
-   * Verificar si el WebSocket está conectado
+   * Verifica si el "WebSocket" está conectado (siempre true en mock)
    */
   public isWebSocketConectado(): boolean {
-    return this.wsService.isConnected();
+    return true; // Siempre conectado en modo mock
   }
 
   /**
-   * Desconectar WebSocket (útil para cleanup)
+   * Desconectar "WebSocket" (no hace nada en mock)
    */
   public desconectar(): void {
-    this.wsService.disconnect();
-  }
-
-  /**
-   * Mostrar notificación nativa del navegador (opcional)
-   */
-  private mostrarNotificacionNativa(alerta: Alerta): void {
-    // Verificar si el navegador soporta notificaciones
-    if (!('Notification' in window)) {
-      return;
-    }
-
-    // Verificar permisos
-    if (Notification.permission === 'granted') {
-      this.crearNotificacion(alerta);
-    } else if (Notification.permission !== 'denied') {
-      // Pedir permiso
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          this.crearNotificacion(alerta);
-        }
-      });
-    }
-  }
-
-  /**
-   * Crear la notificación nativa
-   */
-  private crearNotificacion(alerta: Alerta): void {
-    const icono = alerta.icono || '🔔';
-
-    new Notification(`${icono} ${alerta.titulo}`, {
-      body: alerta.mensaje,
-      icon: '/assets/icons/notification-icon.png', // Opcional: añade un ícono
-      badge: '/assets/icons/badge-icon.png',
-      tag: `alerta-${alerta.id}`, // Evita duplicados
-      requireInteraction: alerta.esUrgente || false // Mantener visible si es urgente
-    });
+    console.log('ℹ️ Modo mock: no hay WebSocket para desconectar');
   }
 }
